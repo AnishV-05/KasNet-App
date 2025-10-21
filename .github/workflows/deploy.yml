@@ -1,0 +1,139 @@
+name: Deploy
+on:
+  push:
+    branches:
+      - develop
+      - production
+jobs:
+  deploy:
+    environment: ${{ github.ref_name == 'production' && 'production' || github.ref_name == 'quality' && 'quality' || 'develop' }}
+    runs-on:
+      - codebuild-${{ github.event.repository.name }}-build-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Setup Node LTS
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+      - name: Installing pulumi cli
+        uses: pulumi/actions@v6
+      - name: Login Codeartifact
+        run: sh ci/codeartifact.sh
+      - name: Clear cache
+        run: yarn cache clean --all
+      - name: Installing dependencies
+        run: yarn install
+      - name: Creating .env
+        run: |
+          echo -e "
+          AWS_ACCOUNT_ID=${{ vars.PULUMI_AWS_ACCOUNT_ID }}
+          API_EXTERNAL_URL=${{ vars.ENV_API_EXTERNAL_URL }}
+          KASNET_APPNAME=${{ vars.ENV_KASNET_APPNAME }}
+          KASNET_LANDING_APPNAME=${{ vars.ENV_KASNET_LANDING_APPNAME }}
+          ANALYTICS_API_KEY=${{ vars.ENV_REACT_SITE_KEY_RECAPTCHA }}
+          API_MOCKING=${{ vars.ENV_API_MOCKING }}
+          ENV=${{ vars.ENV_ENVIRONMENT }}
+          " > .env
+    #  - name: Build Android App
+    #   run: yarn bundle:android
+      - name: Build Web
+        run: yarn build
+      - name: Sonarqube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        with:
+          args: >
+            -Dsonar.projectKey="${{ vars.SONAR_PROJECT_KEY }}"
+            -Dsonar.projectName="${{ github.event.repository.name }}"
+            -Dsonar.projectVersion=${{ github.sha }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      # If you wish to fail your job when the Quality Gate is red, uncomment the
+      # following lines. This would typically be used to fail a deployment.
+      # - name: Sonarqube Quality Gate
+      #   uses: SonarSource/sonarqube-quality-gate-action@v1
+      #   timeout-minutes: 10
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Creating Pulumi.*.yaml
+        run: |
+          echo -e "config:
+            aws:region: us-east-1
+            aws:accountId: ${{ vars.PULUMI_AWS_ACCOUNT_ID }}
+            aws:assumeRole: ${{ vars.PULUMI_AWS_ASSUME_ROLE }}
+            aws:sessionName: ${{ vars.PULUMI_AWS_SESSION_NAME }}
+            aws:providerName: ${{ vars.PULUMI_AWS_PROVIDER_NAME }}
+            aws:projectArea: ${{ vars.PULUMI_AWS_PROJECT_AREA }}
+            aws:projectName: ${{ vars.PULUMI_AWS_PROJECT_NAME }}
+            aws:projectRepository: ${{ vars.PULUMI_AWS_PROJECT_REPOSITORY }}
+            aws:projectSource: ${{ vars.PULUMI_AWS_PROJECT_SOURCE }}
+            aws:projectTeam: ${{ vars.PULUMI_AWS_PROJECT_TEAM }}
+            app:useCustomDomain: ${{ vars.PULUMI_APP_USE_CUSTOM_DOMAIN }}
+            app:customDomain: ${{ vars.PULUMI_APP_CUSTOM_DOMAIN }}
+            app:customSubDomain: ${{ vars.PULUMI_APP_CUSTOM_SUB_DOMAIN }}
+            aws:domainAssumeRole: ${{ vars.PULUMI_AWS_DOMAIN_ASSUME_ROLE }}
+          " > infra/Pulumi.${{ github.ref_name }}.yaml
+      
+
+
+      - name: Previewing infrastructure changes
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          work-dir: ./infra
+          stack-name: ${{ github.ref_name }}
+          cloud-url: s3://globokas-devops-iac-stacks/${{ github.event.repository.name }}
+          refresh: true
+          upsert: true
+        env:
+          AWS_REGION: 'us-east-1'
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+     
+      
+    
+
+      
+      - name: Applying infrastructure
+        uses: pulumi/actions@v6
+        id: pulumi
+        with:
+          command: up
+          work-dir: ./infra
+          stack-name: ${{ github.ref_name }}
+          cloud-url: s3://globokas-devops-iac-stacks/${{ github.event.repository.name }}
+          refresh: true
+          upsert: true
+        env:
+          AWS_REGION: 'us-east-1'
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+       
+      - name: Change credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ vars.PULUMI_AWS_ASSUME_ROLE }}
+          role-skip-session-tagging: true
+          role-duration-seconds: 3000
+          aws-region: us-east-1
+      - name: Update Bucket
+        run: |
+          aws s3 sync --delete dist/ s3://${{ steps.pulumi.outputs.bucketName }}/
+      
+      - name: Update Cloudfront
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ steps.pulumi.outputs.distributionId }} --paths '/*'
+       # - name: Wait Cloudfront invalidation
+       #   run: |
+       #     aws cloudfront wait invalidation-completed --distribution-id ${{ steps.pulumi.outputs.distributionId }} --id ${{ steps.pulumi.outputs.distributionId }}

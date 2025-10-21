@@ -1,0 +1,35 @@
+# Dependencies & Other directories
+build/
+dist/
+node_modules/
+.jest/reports/
+reports/
+.DS_Store
+
+# Editor directories and files
+.idea/*
+.vscode/
+
+# Logs & Lock files
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.npmrc
+Pulumi.*.yaml
+
+# Kasnet Design System
+public/animations/
+public/brands/
+public/fonts/
+public/icons/
+public/illustrations/
+
+# Yarn
+
+.yarn
+.yarnrc.yml
+.pnp.loader.mjs
+.pnp.cjs

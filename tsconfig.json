@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": false,
+    "noEmit": false,
+    "jsx": "react-jsx",
+    "baseUrl": "./",
+    "preserveSymlinks": true,
+    "paths": {
+      "@/*": ["src/*"],
+      "@test/*": [".jest/*"]
+    },
+    "plugins": [
+      {
+        "name": "typescript-plugin-css-modules",
+        "options": {
+          "modules": true,
+          "goToDefinition": true
+        }
+      }
+    ]
+  },
+  "exclude": ["node_modules", "dist"],
+  "include": [
+    "src",
+    "declarations/typings.d.ts",
+    ".jest/typings.d.ts"
+  ]
+}

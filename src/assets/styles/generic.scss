@@ -1,0 +1,107 @@
+// @import "../helpers/mixins";
+
+$body-color: #000 !default;
+$body-background-color: #fff !default;
+$body-family: 'Poppins-Regular', sans-serif !default;
+$body-weight: normal !default;
+$body-font-size: 1rem !default;
+$body-line-height: 1.5 !default;
+$body-size: 1rem !default;
+$body-min-width: 18.75rem !default;
+$body-rendering: optimizeLegibility !default;
+
+$code-color: #000 !default;
+$code-family: monospace !default;
+$code-padding: 0.25rem 0.5rem 0.25rem !default;
+$code-weight: normal !default;
+$code-size: 0.875rem !default;
+
+#root {
+  position: relative;
+}
+
+html {
+  background-color: #fff;
+  font-size: 14px;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  min-width: 360px;
+  text-size-adjust: 100%;
+}
+
+article,
+aside,
+figure,
+footer,
+header,
+hgroup,
+section {
+  display: block;
+}
+
+body,
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: 'Poppins-Regular';
+}
+
+code,
+pre {
+  -moz-osx-font-smoothing: auto;
+  -webkit-font-smoothing: auto;
+  font-family: 'Poppins-Regular';
+}
+
+body {
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+a {
+  cursor: pointer;
+}
+
+code {
+  color: $code-color;
+  font-size: $code-size;
+  font-weight: $code-weight;
+  padding: $code-padding;
+}
+
+hr {
+  border: none;
+  display: block;
+}
+
+img {
+  height: auto;
+  max-width: 100%;
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  vertical-align: baseline;
+}
+
+span {
+  font-style: inherit;
+  font-weight: inherit;
+}
+
+fieldset {
+  border: none;
+}
+
+table {
+  td,
+  th {
+    vertical-align: top;
+    &:not([align]) {
+      text-align: inherit;
+    }
+  }
+}

@@ -1,0 +1,4 @@
+@use 'sass:math';
+@forward 'sass:math' as math-*;
+// este archivo se llama desde el webpack config
+@debug 'globals.scss loaded';

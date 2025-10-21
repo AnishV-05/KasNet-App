@@ -1,0 +1,13 @@
+{
+  "home": "Inicio",
+  "common": {
+    "enter": "Ingresar",
+    "understand": "Entendido"
+  },
+  "login": {
+    "ready": {
+      "already": "Ya iniciaste sesión",
+      "logout": "Salir"
+    }
+  }
+}
