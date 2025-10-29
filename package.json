@@ -29,8 +29,8 @@
     "prepare": "husky install"
   },
   "engines": {
-  "node": "18.x"
-},
+    "node": "18.x"
+  },
   "release": {
     "branches": [
       "production"
