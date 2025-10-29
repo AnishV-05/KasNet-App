@@ -79,6 +79,7 @@
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "classnames": "^2.5.1",
+    "dotenv": "^17.2.3",
     "dotenv-webpack": "^7.1.1",
     "esbuild-loader": "^4.3.0",
     "events": "^3.3.0",
@@ -122,6 +123,7 @@
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.5.1",
     "@types/amplitude-js": "^6.0.0",
+    "@types/dotenv": "^8.2.3",
     "@types/events": "^3",
     "@types/jest": "^29.5.6",
     "@types/jsrsasign": "^10.5.12",
@@ -172,7 +174,7 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.2.1"
   },
-  "packageManager": "npm@9.8.1",
+  "packageManager": "yarn@4.5.3",
   "resolutions": {
     "eslint-config-prettier": "10.1.5",
     "@pkgr/core": "0.1.1",
