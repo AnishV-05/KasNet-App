@@ -19,13 +19,7 @@ function mergeRules(config, rules) {
   })
   return config
 }
-
-// El scss adicional para que webpackconfig lo cargue a nivel de proyecto
-// y el tsconfig lo añada mediante un plugin (typescript-plugin-css-modules) en el VSCode
-// const pluginCssModules = tsconfig.compilerOptions.plugins.find(
-//   plugin => plugin.name === 'typescript-plugin-css-modules'
-// )
-
+ 
 module.exports = (_, argv) => {
   const config = {
     entry: './src/main',
@@ -64,10 +58,6 @@ module.exports = (_, argv) => {
           loader: 'ts-loader',
           exclude: /node_modules/,
         },
-        // {
-        //   test: /\.(png|svg|jpg|jpeg|gif)$/i,
-        //   type: 'asset/resource',
-        // },
         {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
           type: 'asset/resource',
@@ -120,6 +110,8 @@ module.exports = (_, argv) => {
       new Dotenv(),
     ],
   }
+ 
+  // CSS / SCSS rule — ensure postcss-loader runs (Tailwind via postcss.config.js)
   const rules = [
     {
       test: /\.(scss|css)$/,
@@ -127,15 +119,23 @@ module.exports = (_, argv) => {
         'style-loader',
         'css-loader',
         {
+          loader: 'postcss-loader',
+          options: {
+            postcssOptions: {
+              // ensure postcss uses your project config (tailwind + autoprefixer)
+              config: path.resolve(__dirname, 'postcss.config.js'),
+            },
+          },
+        },
+        {
           loader: 'sass-loader',
           options: {
-            // https://github.com/webpack-contrib/sass-loader#additionaldata
-            // additionalData: pluginCssModules.options.additionalData,
+            // any sass-loader options you need can go here
           },
         },
       ],
-    }
+    },
   ]
-
+ 
   return mergeRules(config, rules)
 }

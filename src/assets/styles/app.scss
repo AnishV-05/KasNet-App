@@ -1,3 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import './_fonts';
 @import 'reset';
 @import 'generic';
+
+.home-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.home-cta {
+  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+  color: #fff;
+  border: none;
+  padding: 0.85rem 1.75rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+ 
+.home-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+}
+
+html, body {
+  overflow: hidden;
+}
+ 
+::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+
+ 
