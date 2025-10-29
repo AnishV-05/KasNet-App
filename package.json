@@ -29,7 +29,7 @@
     "prepare": "husky install"
   },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "release": {
     "branches": [
@@ -172,7 +172,7 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.2.1"
   },
-  "packageManager": "yarn@4.5.3",
+  "packageManager": "npm@9.8.1",
   "resolutions": {
     "eslint-config-prettier": "10.1.5",
     "@pkgr/core": "0.1.1",
