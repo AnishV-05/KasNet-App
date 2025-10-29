@@ -10,7 +10,9 @@ const API_LIST = [
   },
 ];
 
-dotenv.config({ path: path.join(__dirname, "../.env") });
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: path.join(__dirname, "../.env") });
+}
 
 if (!process.env[API_LIST[index].env]) {
   throw new Error(
