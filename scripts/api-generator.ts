@@ -1,6 +1,6 @@
 import type { ConfigFile } from "@rtk-query/codegen-openapi";
-import * as dotenv from "dotenv";
-import * as path from "path";
+import dotenv from "dotenv";
+import path from "path";
 
 const index = 1;
 const API_LIST = [
@@ -10,8 +10,12 @@ const API_LIST = [
   },
 ];
 
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config({ path: path.join(__dirname, "../.env") });
+try {
+  if (process.env.NODE_ENV !== "production") {
+    dotenv.config({ path: path.join(__dirname, "../.env") });
+  }
+} catch {
+  console.warn("⚠️ .env not found — using environment variables from system");
 }
 
 if (!process.env[API_LIST[index].env]) {
