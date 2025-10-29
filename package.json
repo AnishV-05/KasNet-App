@@ -28,6 +28,9 @@
     "preserve": "node scripts/copy-tokens.js",
     "prepare": "husky install"
   },
+  "engines": {
+  "node": "18.x"
+},
   "release": {
     "branches": [
       "production"
