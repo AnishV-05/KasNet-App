@@ -264,7 +264,7 @@ export function DashboardScreen() {
               {/* Transaction Details */}
               <div className="flex flex-col items-center lg:items-stretch gap-[20px] sm:gap-[24px] w-full">
                 {/* Pie Chart */}
-                <div className="w-full flex items-center justify-center mb-[8px]">
+                <div className="w-full flex items-center justify-center mb-[8px] mt-[20px] sm:mt-[24px]">
                   <div className="relative w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px]">
                     <svg viewBox="0 0 208 208" className="w-full h-full">
                       <g>
