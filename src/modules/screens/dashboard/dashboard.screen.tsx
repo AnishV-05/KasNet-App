@@ -8,10 +8,10 @@ import { TimePeriodTabs } from "./component/TimePeriodTabs";
 import { SummaryCards } from "./component/SummaryCards";
 import { ChartSection } from "./component/ChartSection";
 import { RecommendationsSection } from "./component/RecommendationsSection";
-
+ 
 type TimePeriod = "Diario" | "Semanal" | "Mensual";
 type TransactionType = "Canal" | "Operación" | "Entidad";
-
+ 
 const mockData = {
   Diario: {
     summary: {
@@ -47,7 +47,7 @@ const mockData = {
     })),
   },
 };
-
+ 
 const mockTransactionData = {
   Canal: {
     Diario: {
@@ -128,7 +128,7 @@ const mockTransactionData = {
     },
   },
 };
-
+ 
 const bottomNavItems = [
   { id: "inicio", label: "Inicio", icon: Home },
   { id: "transacciones", label: "Transacciones", icon: ArrowLeftRight },
@@ -136,25 +136,25 @@ const bottomNavItems = [
   { id: "tarifario", label: "Tarifario", icon: Percent },
   { id: "rendimiento", label: "Rendimiento", icon: LayoutDashboard },
 ];
-
+ 
 export function DashboardScreen() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("Diario");
   const [transactionType, setTransactionType] = useState<TransactionType>("Canal");
   const [activeMenu, setActiveMenu] = useState("rendimiento");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
+ 
   const data = mockData[timePeriod];
   const transactionData = mockTransactionData[transactionType][timePeriod];
-
+ 
   const transactionTypes: TransactionType[] = ["Canal", "Operación", "Entidad"];
-
+ 
   // Helper to convert color class to hex for donut chart
   const getColorHex = (colorClass: string) => {
     if (colorClass.includes("4b4bbb")) return "#4B4BBB";
     if (colorClass.includes("f9cb00")) return "#F9CB00";
     return "#AAB5FF";
   };
-
+ 
  return (
   <div className="bg-white relative w-full min-h-screen flex flex-col lg:max-w-none mx-auto overflow-x-hidden overflow-y-hidden">
     {/* Headers */}
@@ -164,7 +164,7 @@ export function DashboardScreen() {
     <div className="lg:hidden sticky top-0 z-20">
       <MobileHeader />
     </div>
-
+ 
     {/* Main Content */}
     <div className="flex flex-1 overflow-hidden">
       {/* Desktop Sidebar */}
@@ -174,7 +174,7 @@ export function DashboardScreen() {
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
       </div>
-
+ 
       <div className="flex h-screen w-full">
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto">
@@ -182,17 +182,17 @@ export function DashboardScreen() {
           <div
             className={`w-full max-w-[1440px] mx-auto px-[12px] sm:px-[20px] md:px-[24px] lg:px-[40px] py-[16px] sm:py-[20px] lg:py-[32px] pb-[100px] lg:pb-[32px] flex flex-col lg:grid lg:gap-[48px] ${
               sidebarCollapsed
-                ? "lg:grid-cols-[minmax(0,700px)_1px_500px]"
-                : "lg:grid-cols-[minmax(0,1000px)_1px_500px]"
+                ? "lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]"
+                : "lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]"
             }`}
           >
             {/* Left column */}
             <div className="flex flex-col">
               {/* Recommendation first on mobile/tablet, last on desktop */}
-              <div className="order-1 lg:order-4 mt-[16px] sm:mt-[24px] mb-[32px] sm:mb-[48px] w-full">
+              <div className="order-1 lg:order-4 mt-[8px] sm:mt-[8px] mb-[32px] sm:mb-[0px] w-full">
                 <RecommendationsSection />
               </div>
-
+ 
               {/* Summary Title + Tabs */}
               <div className="order-2 lg:order-1 flex flex-col gap-[12px] mb-[20px] sm:mb-[32px]">
                 <h1 className="font-['Poppins-SemiBold'] text-[#444444] text-[16px] sm:text-[18px] md:text-[20px] leading-tight">
@@ -202,7 +202,7 @@ export function DashboardScreen() {
                   <TimePeriodTabs timePeriod={timePeriod} setTimePeriod={setTimePeriod} />
                 </div>
               </div>
-
+ 
               {/* Summary Cards */}
               <div className="order-3 lg:order-2 mb-[24px] sm:mb-[32px] w-full">
                 <div className="flex flex-wrap justify-center sm:justify-start gap-[12px] sm:gap-[16px] md:gap-[20px]">
@@ -213,22 +213,23 @@ export function DashboardScreen() {
                   />
                 </div>
               </div>
-
+ 
               {/* Chart Section */}
-              <div className="order-4 lg:order-3 mb-[32px] sm:mb-[48px] w-full overflow-x-auto">
+              <div className="order-4 lg:order-3 mb-[10px] sm:mb-[0px] w-full overflow-x-auto">
                 <ChartSection timePeriod={timePeriod} chartData={data.chartData} />
               </div>
             </div>
-
+ 
             {/* Vertical Divider */}
             <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-end-[span_4] self-stretch lg:sticky lg:top-0 lg:-mt-[32px] lg:h-[calc(100vh+32px)] lg:w-[2px] bg-[#efefef] z-10"/>
+ 
             {/* Right column */}
             <div className="lg:col-start-3 lg:col-end-4 lg:pl-[24px]">
               <div className="mb-[8px]">
                 <p className="font-['Poppins-SemiBold'] text-[#444444] text-[16px] sm:text-[18px] md:text-[20px] mb-[12px]">
                   Detalle de transacciones
                 </p>
-
+ 
                 {/* Transaction Tabs */}
                 <div className="flex justify-between items-end border-b border-[#efefef] overflow-x-auto no-scrollbar">
                   {transactionTypes.map((type) => {
@@ -241,25 +242,28 @@ export function DashboardScreen() {
                         <button
                           onClick={() => setTransactionType(type)}
                           className={`w-full text-center px-[14px] py-[8px] text-[13px] sm:text-[16px] leading-[18px] transition-all duration-150 rounded-t-[1px]
-                          ${
-                            isActive
-                              ? "bg-[#f5f4ff] text-[#444444] font-['Poppins-SemiBold'] shadow-sm"
-                              : "bg-transparent text-[#6f7276] hover:text-[#4B4BBB] font-['Poppins-SemiBold']"
-                          }`}
+                            ${
+                              isActive
+                                ? "bg-[#f5f4ff] text-[#444444] font-['Poppins-SemiBold'] shadow-sm"
+                                : "bg-transparent text-[#6f7276] hover:text-[#4B4BBB] font-['Poppins-SemiBold']"
+                            }`}
                         >
                           {type}
                         </button>
+
+                        {/* underline — responsive to button width */}
                         <div
-                          className={`absolute bottom-[-1px] h-[2px] w-[100px] sm:w-[128px] rounded-full transition-all duration-200 ${
+                          className={`absolute bottom-[-1px] h-[3px] rounded-full transition-all duration-200 ${
                             isActive ? "bg-[#4B4BBB]" : "bg-transparent"
                           }`}
+                          style={{ left: '14px', right: '14px' }} // matches button px-[14px]
                         />
                       </div>
                     );
                   })}
                 </div>
               </div>
-
+ 
               {/* Transaction Details */}
               <div className="flex flex-col items-center lg:items-stretch gap-[20px] sm:gap-[24px] w-full">
                 {/* Pie Chart */}
@@ -309,7 +313,7 @@ export function DashboardScreen() {
                     </div>
                   </div>
                 </div>
-
+ 
                 {/* Transaction List */}
                 <div className="w-full flex-1">
                   <div className="box-border flex flex-col gap-[6px]">
@@ -353,7 +357,7 @@ export function DashboardScreen() {
     </div>
   </div>
 );
-
+ 
 }
-
+ 
 export default DashboardScreen;
