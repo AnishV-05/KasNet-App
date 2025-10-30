@@ -222,7 +222,6 @@ export function DashboardScreen() {
 
             {/* Vertical Divider */}
             <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-end-[span_4] self-stretch lg:sticky lg:top-0 lg:-mt-[32px] lg:h-[calc(100vh+32px)] lg:w-[2px] bg-[#efefef] z-10"/>
-
             {/* Right column */}
             <div className="lg:col-start-3 lg:col-end-4 lg:pl-[24px]">
               <div className="mb-[8px]">
