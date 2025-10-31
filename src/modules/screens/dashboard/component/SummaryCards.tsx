@@ -57,7 +57,7 @@ export function SummaryCards({
             <p
               className="text-[#444] mb-1 mt-1 max-w-full"
               style={{
-                fontSize: "clamp(11px, 2.1vw, 13px)", // ↓ reduced slightly
+                fontSize: "clamp(10px, 2.1vw, 12px)", // ↓ reduced slightly
                 lineHeight: 1.25,
                 wordBreak: "keep-all",
                 overflowWrap: "normal",
@@ -75,7 +75,7 @@ export function SummaryCards({
             <p
               className="font-['Poppins-SemiBold'] text-[#444] my-1 max-w-full"
               style={{
-                fontSize: "clamp(13px, 2.9vw, 20px)", // ↓ slightly reduced
+                fontSize: "clamp(12px, 2.9vw, 19px)", // ↓ slightly reduced
                 lineHeight: 1.18,
                 whiteSpace: "normal",
                 wordBreak: "keep-all",
