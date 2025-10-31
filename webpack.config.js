@@ -1,6 +1,5 @@
 const { ModuleFederationPlugin } = require('webpack').container
 const { dependencies } = require('./package.json')
-// const tsconfig = require('./tsconfig.json')
 const path = require('node:path')
 const { EsbuildPlugin } = require('esbuild-loader')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
@@ -19,11 +18,16 @@ function mergeRules(config, rules) {
   })
   return config
 }
- 
+
 module.exports = (_, argv) => {
+  const isProd = argv.mode === 'production'
+
   const config = {
     entry: './src/main',
     mode: argv.mode,
+    // <<< important: choose safe source-map for production (no eval())
+    devtool: isProd ? 'source-map' : 'eval-cheap-module-source-map',
+
     devServer: {
       static: path.join(__dirname, 'public'),
       port: 3200,
@@ -69,11 +73,14 @@ module.exports = (_, argv) => {
       ],
     },
     optimization: {
-      minimize: false,
+      // enable minification in production
+      minimize: isProd,
       minimizer: [
         new EsbuildPlugin({
           target: 'es2015',
           css: true,
+          // minify only for production
+          minify: isProd,
         }),
       ],
     },
@@ -110,7 +117,7 @@ module.exports = (_, argv) => {
       new Dotenv(),
     ],
   }
- 
+
   // CSS / SCSS rule — ensure postcss-loader runs (Tailwind via postcss.config.js)
   const rules = [
     {
@@ -122,20 +129,17 @@ module.exports = (_, argv) => {
           loader: 'postcss-loader',
           options: {
             postcssOptions: {
-              // ensure postcss uses your project config (tailwind + autoprefixer)
               config: path.resolve(__dirname, 'postcss.config.js'),
             },
           },
         },
         {
           loader: 'sass-loader',
-          options: {
-            // any sass-loader options you need can go here
-          },
+          options: {},
         },
       ],
     },
   ]
- 
+
   return mergeRules(config, rules)
 }
