@@ -39,7 +39,7 @@ jobs:
         run: |
           echo -e "
           AWS_ACCOUNT_ID=${{ vars.PULUMI_AWS_ACCOUNT_ID }}
-          API_EXTERNAL_URL=${{ vars.ENV_API_EXTERNAL_URL }}
+          NEXT_PUBLIC_API_EXTERNAL_URL=${{ vars.ENV_NEXT_PUBLIC_API_EXTERNAL_URL }}
           KASNET_APPNAME=${{ vars.ENV_KASNET_APPNAME }}
           KASNET_LANDING_APPNAME=${{ vars.ENV_KASNET_LANDING_APPNAME }}
           ANALYTICS_API_KEY=${{ vars.ENV_REACT_SITE_KEY_RECAPTCHA }}
