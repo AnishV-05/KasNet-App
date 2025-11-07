@@ -1,21 +1,58 @@
 import { KASNET_APPNAME } from '@/config/envs'
 import { clearUserSession } from '@/modules/shared/storage/user-session'
-import { BaseQueryApi, BaseQueryFn, FetchArgs, fetchBaseQuery, FetchBaseQueryError } from '@reduxjs/toolkit/query'
+import {
+  BaseQueryApi,
+  BaseQueryFn,
+  FetchArgs,
+  fetchBaseQuery,
+  FetchBaseQueryError,
+} from '@reduxjs/toolkit/query'
 
-const baseQuery = ({ endpoint = '' }: BaseQueryApi): BaseQueryFn<FetchArgs | string, unknown, FetchBaseQueryError> =>
-  fetchBaseQuery({
-    baseUrl: endpoint,
-    prepareHeaders: async headers => {
-      const jsonSession = localStorage.getItem('user-session')
-      const session = JSON.parse(jsonSession ?? '{}')
-      if (session) {
-        // headers.set('Authorization', `Bearer ${session.accessToken}`)
-        headers.set('aws-x-authorization', session.idToken)
-        headers.set('aws-x-source', KASNET_APPNAME)
-      }
-      return headers
-    },
-  })
+/** Safely parse JSON from localStorage */
+const readSession = (): any => {
+  try {
+    const raw = localStorage.getItem('user-session')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * NOTE:
+ * - Do NOT set custom headers when token is missing.
+ *   Custom headers trigger a CORS preflight (OPTIONS) and your backend returns 405 for OPTIONS.
+ * - If you actually need auth later, ensure backend handles CORS/OPTIONS, then enable below.
+ */
+const baseQuery =
+  ({ endpoint = '' }: BaseQueryApi): BaseQueryFn<FetchArgs | string, unknown, FetchBaseQueryError> =>
+    fetchBaseQuery({
+      baseUrl: endpoint,
+      prepareHeaders: async (headers) => {
+        const session = readSession()
+
+        const idToken: string | undefined =
+          session?.idToken && typeof session.idToken === 'string' && session.idToken.trim().length > 0
+            ? session.idToken
+            : undefined
+
+        if (idToken) {
+          // If your backend expects Authorization, uncomment this and ensure CORS supports it.
+          // headers.set('Authorization', `Bearer ${idToken}`)
+
+          // Original custom headers — only set when a token truly exists.
+          headers.set('aws-x-authorization', idToken)
+          headers.set('aws-x-source', KASNET_APPNAME)
+        } else {
+          // Ensure nothing leaks as "undefined" (prevents preflight).
+          headers.delete('aws-x-authorization')
+          headers.delete('aws-x-source')
+          headers.delete('Authorization')
+        }
+
+        return headers
+      },
+    })
 
 export const getBaseQuery: BaseQueryFn<FetchArgs | string, unknown, FetchBaseQueryError> = async (
   args,
@@ -24,15 +61,16 @@ export const getBaseQuery: BaseQueryFn<FetchArgs | string, unknown, FetchBaseQue
 ) => {
   try {
     const result = await baseQuery(api)(args, api, extraOptions)
+
     if (result.error && (result.error.status === 401 || result.error.status === 403)) {
       clearUserSession()
+      // Redirect to login on auth failure
       window.location.href = '/auth/login'
-      // await refreshToken({apiUrlBase: AUTH_API_URL});
-      // result = await baseQuery(api)(args, api, extraOptions);
     }
+
     return result
   } catch (error) {
-    // EventBus.publish(AliasEventBus.Logout, {});
+    // Optional: publish logout / telemetry here
     return Promise.reject(error)
   }
 }
