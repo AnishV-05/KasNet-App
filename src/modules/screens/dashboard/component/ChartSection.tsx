@@ -23,14 +23,13 @@ interface ChartSectionProps {
 
 const MONTH_LABELS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
 
-/* ------------ X ticks (unchanged) ------------ */
-function getDailyXTicks()  { return Array.from({ length: 30 }, (_, i) => i + 1); }
+/* ------------ X ticks (Diario: 1..31) ------------ */
+function getDailyXTicks()  { return Array.from({ length: 31 }, (_, i) => i + 1); }
 function getWeeklyXTicks() { return Array.from({ length: 12 }, (_, i) => i + 1); }
 function getMonthlyXTicks(){ return Array.from({ length: 12 }, (_, i) => i + 1); }
 
-/* ------------ Nice number helpers for Y scale ------------ */
+/* ------------ Nice number helpers ------------ */
 function niceNumber(range: number, round: boolean) {
-  // classic "nice numbers" (1, 2, 2.5, 5, 10) scaling
   const exponent = Math.floor(Math.log10(range || 1));
   const fraction  = range / Math.pow(10, exponent);
   let niceFraction: number;
@@ -48,28 +47,27 @@ function niceNumber(range: number, round: boolean) {
     else if (fraction <= 5)   niceFraction = 5;
     else                      niceFraction = 10;
   }
-
   return niceFraction * Math.pow(10, exponent);
 }
 
-function buildDynamicTicks(maxVal: number, desiredTicks = 6): number[] {
-  // Guard: all zeros
-  if (!(maxVal > 0)) return [0, 1]; // minimal range to avoid flat axis warning
-
-  const n = Math.max(2, desiredTicks);
-  // Step size
-  const step = niceNumber(maxVal / (n - 1), true);
-  // Extend to a nice maximum
-  const niceMax = niceNumber(step * (n - 1), false);
-
+/** Build exactly 6 Y ticks (0 + 5 intervals) that cover maxVal */
+function buildSixTicks(maxVal: number): number[] {
+  const safeMax = Number.isFinite(maxVal) && maxVal > 0 ? maxVal : 1;
+  const step = niceNumber(safeMax / 5, true);
   const ticks: number[] = [];
-  for (let v = 0; v <= niceMax + 1e-9; v += step) ticks.push(Math.round(v));
-  // Ensure 0 present
-  if (ticks[0] !== 0) ticks.unshift(0);
+  for (let i = 0; i <= 5; i++) ticks.push(Math.round(i * step));
+  if (ticks[5] < maxVal) {
+    const step2 = niceNumber(maxVal / 5, false);
+    for (let i = 0; i <= 5; i++) ticks[i] = Math.round(i * step2);
+  }
+  ticks[0] = 0;
   return ticks;
 }
 
 export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
+  /* ------------ Prevent flicker: Only render chart when real data is present ------------ */
+  const hasData = Array.isArray(chartData) && chartData.some(d => d?.value !== null && d?.value !== undefined);
+
   /* ------------ X axis ------------ */
   const xTicks =
     timePeriod === "Diario"
@@ -78,22 +76,17 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
       ? getWeeklyXTicks()
       : getMonthlyXTicks();
 
-  const xDomain = timePeriod === "Diario" ? [1, 30] : [1, 12];
+  const xDomain = timePeriod === "Diario" ? [1, 31] : [1, 12];
 
-  /* ------------ Dynamic Y ticks ------------ */
+  /* ------------ Y ticks: exactly 6 ------------ */
   const maxValue = chartData.reduce((m, d) => Math.max(m, d.value || 0), 0);
+  const yTicks = buildSixTicks(maxValue);
 
-  // Choose a sensible tick density per period
-  const desiredTickCount =
-    timePeriod === "Diario" ? 6 : timePeriod === "Semanal" ? 6 : 6;
-
-  const yTicks = buildDynamicTicks(maxValue, desiredTickCount);
-
-  /* ------------ Custom X tick renderers (unchanged) ------------ */
+  /* ------------ Custom X tick renderers ------------ */
   const renderXAxisTick = (props: any) => {
     const { x, y, payload } = props;
     const val = Number(payload.value);
-    const isLabel = (val % 2 !== 0 || val === 30) && val !== 29; // hide 29
+    const isLabel = val % 2 !== 0; // only odd numbers
     const dotChar = "◦";
 
     return (
@@ -136,18 +129,35 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
     );
   };
 
+  /* ------------ SKELETON while loading ------------ */
+  if (!hasData) {
+    return (
+      <div className="w-full lg:col-start-1 lg:col-end-2">
+        <div className="w-full flex justify-start mb-[12px]">
+          <div className="max-w-[760px] w-full">
+            <h2 className="font-['Poppins-SemiBold'] text-[#222222] text-[16px] sm:text-[18px] md:text-[20px] mb-[6px]">
+              Rendimiento de transacciones
+            </h2>
+          </div>
+        </div>
+        <div className="w-full h-[240px] sm:h-[260px] md:h-[300px] rounded-md bg-[#f2f2f2] animate-pulse" />
+      </div>
+    );
+  }
+
+  /* ------------ REAL CHART ------------ */
   return (
     <div className="w-full lg:col-start-1 lg:col-end-2">
       <div className="w-full flex justify-start mb-[12px]">
         <div className="max-w-[760px] w-full">
-          <h2 className="font-['Poppins-SemiBold'] font-semibold text-[#222222] text-[16px] sm:text-[18px] md:text-[20px] mb-[6px]">
+          <h2 className="font-['Poppins-SemiBold'] text-[#222222] text-[16px] sm:text-[18px] md:text-[20px] mb-[6px]">
             Rendimiento de transacciones
           </h2>
           <div className="flex items-center gap-[7px]">
-            <Calendar className="w-[13px] h-[13px] sm:w-[14px] sm:h-[14px] text-[#6f7276]" />
+            <Calendar className="w-[13px] h-[13px] text-[#6f7276]" />
             <p className="font-['Poppins-Regular'] text-[#6f7276] text-[10px] sm:text-[11px] md:text-[12px] leading-[18px]">
               {timePeriod === "Diario"
-                ? `Tabla diario de los últimos 30 días`
+                ? `Tabla diario de los últimos 31 días`
                 : timePeriod === "Semanal"
                 ? `Tabla semanal de los últimos 3 meses`
                 : `Tabla mensual de los últimos 12 meses`}
@@ -158,7 +168,11 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
 
       <div className="w-full h-[240px] sm:h-[260px] md:h-[300px] flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 12, left: -10, bottom: 0 }}>
+          <AreaChart
+            key={timePeriod} // prevents stale chart reuse (fixes flicker)
+            data={chartData}
+            margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
+          >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#4B4BBB" stopOpacity={0.6} />
@@ -166,7 +180,7 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="0" stroke="#dcdcdc" vertical={true} horizontal={true} />
+            <CartesianGrid strokeDasharray="0" stroke="#dcdcdc" vertical horizontal />
 
             <XAxis
               dataKey="day"
