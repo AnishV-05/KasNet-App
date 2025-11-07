@@ -1,7 +1,6 @@
 // src/modules/screens/dashboard/dashboard.screen.tsx
 import "@/assets/styles/app.scss";
 import { useMemo, useState } from "react";
-import { Home, LayoutDashboard, ArrowLeftRight, QrCode, Percent } from "lucide-react";
 import { DesktopHeader } from "./layout/DesktopHeader";
 import { DesktopSidebar } from "./layout/DesktopSidebar";
 import { MobileHeader } from "./layout/MobileHeader";
@@ -25,17 +24,25 @@ export function DashboardScreen() {
   const [activeMenu, setActiveMenu] = useState("rendimiento");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // ---- dynamic ranges by tab ----
+  // ---- date ranges by tab ----
   const fmt = (d: Date) => d.toISOString().split("T")[0];
   const today = new Date();
-  const daysAgo = (n: number) => { const d = new Date(today); d.setDate(d.getDate() - n); return d; };
+  const daysAgo = (n: number) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - n);
+    return d;
+  };
   const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
-  const monthsAgoStart = (n: number) => { const d = startOfMonth(today); d.setMonth(d.getMonth() - n); return d; };
+  const monthsAgoStart = (n: number) => {
+    const d = startOfMonth(today);
+    d.setMonth(d.getMonth() - n);
+    return d;
+  };
 
   const ranges: Record<TimePeriod, { start: string; end: string }> = {
-    Diario:  { start: fmt(daysAgo(29)), end: fmt(today) },          // ~30 días
-    Semanal: { start: fmt(daysAgo(83)), end: fmt(today) },          // ~12 semanas
-    Mensual: { start: fmt(monthsAgoStart(11)), end: fmt(today) },   // 12 meses
+    Diario: { start: fmt(daysAgo(29)), end: fmt(today) }, // ~30 días
+    Semanal: { start: fmt(daysAgo(83)), end: fmt(today) }, // ~12 semanas
+    Mensual: { start: fmt(monthsAgoStart(11)), end: fmt(today) }, // 12 meses
   };
 
   const terminalId = "21811201";
@@ -51,31 +58,34 @@ export function DashboardScreen() {
   const { data: apiSummary, isFetching: loadingSummary } =
     useGetSummaryQuery({ terminal_id: terminalId, start, end });
 
-  const { data: apiSeries, isFetching: loadingSeries} =
+  const { data: apiSeries, isFetching: loadingSeries } =
     useGetTimeseriesQuery({ terminal_id: terminalId, start, end });
 
   const { data: apiGroup, isFetching: loadingGroup } =
     useGetGroupByQuery({ terminal_id: terminalId, dimension: dimMap[transactionType], start, end });
 
   // ---- helpers ----
-  const toAmPm = (h: number) => { const hr = h % 24; const hh = hr % 12 || 12; return `${hh}:00 ${hr >= 12 ? "pm" : "am"}`; };
+  const toAmPm = (h: number) => {
+    const hr = h % 24;
+    const hh = hr % 12 || 12;
+    return `${hh}:00 ${hr >= 12 ? "pm" : "am"}`;
+  };
   const parse = (s: string) => new Date(s + "T00:00:00");
 
   // color utils
-  const BRAND_COLORS = ["#4B4BBB", "#F9CB00", "#AAB5FF"]; // keep your originals for top 3
+  const BRAND_COLORS = ["#4B4BBB", "#F9CB00", "#AAB5FF"]; // keep originals for top 3
   const EXTRA_COLORS = [
     "#2BBBD8", "#FF6B6B", "#2ECC71", "#FF9F43",
     "#F368E0", "#5C7CFA", "#A3E635", "#22D3EE", "#64748B", "#8B5CF6",
   ];
-  const wheelColor = (i: number) => {
-    // fallback wheel if we exceed EXTRA_COLORS
-    const hue = (i * 47) % 360;
-    return `hsl(${hue} 70% 52%)`;
-  };
+  const wheelColor = (i: number) => `hsl(${(i * 47) % 360} 70% 52%)`;
   const luminance = (hex: string) => {
-    const c = hex.replace("#",""); const r = parseInt(c.slice(0,2),16)/255; const g = parseInt(c.slice(2,4),16)/255; const b = parseInt(c.slice(4,6),16)/255;
-    const f = (v:number)=> (v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4));
-    return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);
+    const c = hex.replace("#", "");
+    const r = parseInt(c.slice(0, 2), 16) / 255;
+    const g = parseInt(c.slice(2, 4), 16) / 255;
+    const b = parseInt(c.slice(4, 6), 16) / 255;
+    const f = (v: number) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
   };
   const bestText = (hex: string) => (luminance(hex) > 0.55 ? "#1f2937" : "#ffffff");
 
@@ -114,13 +124,13 @@ export function DashboardScreen() {
     return series.map((p, i) => ({ day: i + 1, value: p.transactions || 0 }));
   };
 
-  // ---- SUMMARY (only backend; placeholder while loading) ----
+  // ---- SUMMARY (backend; placeholder while loading) ----
   const summary = useMemo(() => {
     if (!apiSummary) {
       return {
         totalTransactions: { value: loadingSummary ? "…" : "0", change: 0, isPositive: true },
         favoriteOperation: { value: loadingSummary ? "…" : "-", change: 0, isPositive: true },
-        peakHour:         { value: loadingSummary ? "…" : "-", change: 0, isPositive: true },
+        peakHour: { value: loadingSummary ? "…" : "-", change: 0, isPositive: true },
       };
     }
     return {
@@ -135,27 +145,24 @@ export function DashboardScreen() {
         isPositive: true,
       },
       peakHour: {
-        value:
-          typeof apiSummary.peak_hour?.value === "number"
-            ? toAmPm(apiSummary.peak_hour.value)
-            : "-",
+        value: typeof apiSummary.peak_hour?.value === "number" ? toAmPm(apiSummary.peak_hour.value) : "-",
         change: apiSummary.peak_hour?.growth ?? 0,
         isPositive: (apiSummary.peak_hour?.growth ?? 0) >= 0,
       },
     };
   }, [apiSummary, loadingSummary]);
 
-  // ---- CHART (only backend; empty array while loading) ----
+  // ---- CHART (backend; empty array while loading) ----
   const chartData = useMemo(() => {
     if (!apiSeries?.length) return [];
     return aggregateSeries(
-      apiSeries.map(s => ({ date: s.date, transactions: s.transactions ?? 0 })),
+      apiSeries.map((s) => ({ date: s.date, transactions: s.transactions ?? 0 })),
       timePeriod,
       start
     );
   }, [apiSeries, timePeriod, start]);
 
-  // ---- DONUT/LIST (keeps brand colors for first 3, auto-generates beyond) ----
+  // ---- DONUT/LIST (brand colors for top 3, auto-generate beyond) ----
   const transactionData = useMemo(() => {
     if (!apiGroup?.length) return { total: 0, items: [] as any[] };
 
@@ -166,7 +173,7 @@ export function DashboardScreen() {
       .map((row, idx) => {
         let colorHex: string;
         if (idx < BRAND_COLORS.length) {
-          colorHex = BRAND_COLORS[idx]; // keep your exact brand colors for top 3
+          colorHex = BRAND_COLORS[idx];
         } else {
           const extraIndex = idx - BRAND_COLORS.length;
           colorHex = EXTRA_COLORS[extraIndex] ?? wheelColor(extraIndex);
@@ -184,19 +191,21 @@ export function DashboardScreen() {
     // ensure rounding sums to 100
     const sum = items.reduce((a, i) => a + (i.percentage || 0), 0);
     if (items.length && sum !== 100) {
-      items[items.length - 1].percentage += (100 - sum);
+      items[items.length - 1].percentage += 100 - sum;
     }
 
     return { total, items };
   }, [apiGroup]);
 
-  const transactionTypes: TransactionType[] = ["Canal", "Operación", "Entidad"];
-
   return (
     <div className="bg-white relative w-full min-h-screen flex flex-col lg:max-w-none mx-auto overflow-x-hidden overflow-y-hidden">
       {/* Headers */}
-      <div className="hidden lg:block sticky top-0 z-20"><DesktopHeader /></div>
-      <div className="lg:hidden sticky top-0 z-20"><MobileHeader /></div>
+      <div className="hidden lg:block sticky top-0 z-20">
+        <DesktopHeader />
+      </div>
+      <div className="lg:hidden sticky top-0 z-20">
+        <MobileHeader />
+      </div>
 
       <BottomNav active={activeMenu} onChange={(id) => setActiveMenu(id)} />
 
@@ -212,13 +221,15 @@ export function DashboardScreen() {
 
         <div className="flex h-screen w-full min-w-0">
           {/* Main Content Area */}
-          <div className="flex-1 overflow-y-auto min-w-0" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
+          <div
+  className="
+    flex-1 overflow-y-auto min-w-0
+    pb-[calc(64px+env(safe-area-inset-bottom))]
+    sm:pb-[calc(114px+env(safe-area-inset-bottom))]
+  "
+>
             <div
-              className={`w-full max-w-[1440px] mx-auto px-[12px] sm:px-[20px] md:px-[24px] lg:px-[40px] py-[16px] sm:py-[20px] lg:py-[32px] pb-[100px] lg:pb-[32px] flex flex-col lg:grid lg:gap-[48px] ${
-                sidebarCollapsed
-                  ? "lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]"
-                  : "lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]"
-              }`}
+              className={`w-full max-w-[1440px] mx-auto px-[12px] sm:px-[20px] md:px-[24px] lg:px-[40px] py-[16px] sm:py-[20px] lg:py-[32px] pb-[100px] lg:pb-[32px] flex flex-col lg:grid lg:gap-[40px] lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]`}
             >
               {/* Left column */}
               <div className="flex flex-col">
@@ -246,15 +257,15 @@ export function DashboardScreen() {
                 </div>
 
                 <div className="order-4 lg:order-3 mb-[10px] sm:mb-[0px] w-full overflow-x-auto min-w-0">
-                  <ChartSection timePeriod={timePeriod} chartData={chartData} isFetching={loadingSeries}/>
+                  <ChartSection timePeriod={timePeriod} chartData={chartData} isFetching={loadingSeries} />
                 </div>
               </div>
 
               {/* Vertical Divider */}
-              <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-end-[span_4] self-stretch lg:sticky lg:top-0 lg:-mt-[32px] lg:h-[calc(100vh+32px)] lg:w-[2px] bg-[#efefef] z-10"/>
+              <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-end-[span_4] self-stretch lg:sticky lg:top-0 lg:-mt-[32px] lg:h-[calc(100vh+32px)] lg:w-[2px] bg-[#efefef] z-10" />
 
               {/* Right column */}
-              <div className="lg:col-start-3 lg:col-end-4 lg:pl-[24px]">
+              <div className="lg:col-start-3 lg:col-end-4 ">
                 <div className="mb-[8px]">
                   <p className="font-['Poppins-SemiBold'] text-[#444444] text-[16px] sm:text-[18px] md:text-[20px] mb-[12px]">
                     Detalle de transacciones
@@ -268,13 +279,19 @@ export function DashboardScreen() {
                           <button
                             onClick={() => setTransactionType(type)}
                             className={`w-full text-center px-[14px] py-[8px] text-[13px] sm:text-[16px] leading-[18px] transition-all duration-150 rounded-t-[1px]
-                              ${isActive ? "bg-[#f5f4ff] text-[#444444] font-['Poppins-SemiBold'] shadow-sm" : "bg-transparent text-[#6f7276] hover:text-[#4B4BBB] font-['Poppins-SemiBold']"}`}
+                              ${
+                                isActive
+                                  ? "bg-[#f5f4ff] text-[#444444] font-['Poppins-SemiBold'] shadow-sm"
+                                  : "bg-transparent text-[#6f7276] hover:text-[#4B4BBB] font-['Poppins-SemiBold']"
+                              }`}
                           >
                             {type}
                           </button>
                           <div
-                            className={`absolute bottom-[-1px] h-[3px] rounded-full transition-all duration-200 ${isActive ? "bg-[#4B4BBB]" : "bg-transparent"}`}
-                            style={{ left: '14px', right: '14px' }}
+                            className={`absolute bottom-[-1px] h-[3px] rounded-full transition-all duration-200 ${
+                              isActive ? "bg-[#4B4BBB]" : "bg-transparent"
+                            }`}
+                            style={{ left: "14px", right: "14px" }}
                           />
                         </div>
                       );
@@ -312,7 +329,8 @@ export function DashboardScreen() {
                               if (!items0.length || (transactionData?.total ?? 0) === 0) {
                                 return (
                                   <circle
-                                    cx="104" cy="104"
+                                    cx="104"
+                                    cy="104"
                                     r={(innerRadius + outerRadius) / 2}
                                     fill="none"
                                     stroke="#efefef"
@@ -325,7 +343,8 @@ export function DashboardScreen() {
                                 const c = items0[0];
                                 return (
                                   <circle
-                                    cx="104" cy="104"
+                                    cx="104"
+                                    cy="104"
                                     r={(innerRadius + outerRadius) / 2}
                                     fill="none"
                                     stroke={c.colorHex}
@@ -398,9 +417,7 @@ export function DashboardScreen() {
                       // ---------- Actual Data ----------
                       <div className="box-border flex flex-col gap-[6px]">
                         {transactionData.items.length === 0 && (
-                          <div className="px-[10px] py-[12px] text-[#6f7276] text-[13px]">
-                            Sin datos.
-                          </div>
+                          <div className="px-[10px] py-[12px] text-[#6f7276] text-[13px]">Sin datos.</div>
                         )}
 
                         {transactionData.items.map((item: any, idx: number) => (
@@ -415,10 +432,7 @@ export function DashboardScreen() {
                                 className="flex items-center justify-center min-w-[50px] sm:min-w-[56px] px-[10px] py-[6px] rounded-[20px]"
                                 style={{ backgroundColor: item.colorHex }}
                               >
-                                <p
-                                  className="font-['Poppins-Medium'] text-[13px] sm:text-[14px]"
-                                  style={{ color: item.textHex }}
-                                >
+                                <p className="font-['Poppins-Medium'] text-[13px] sm:text-[14px]" style={{ color: item.textHex }}>
                                   {item.name}
                                 </p>
                               </div>
@@ -427,16 +441,13 @@ export function DashboardScreen() {
                               <p className="font-['Poppins-SemiBold'] text-[#444] text-[13px] sm:text-[14px]">
                                 {item.transactions} trxs.
                               </p>
-                              <p className="text-[#444] font-['Poppins-Regular'] text-[12px]">
-                                S/. {Number(item.amount ?? 0).toFixed(2)}
-                              </p>
+                              <p className="text-[#444] font-['Poppins-Regular'] text-[12px]">S/. {Number(item.amount ?? 0).toFixed(2)}</p>
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
-
                 </div>
               </div>
               {/* /Right column */}

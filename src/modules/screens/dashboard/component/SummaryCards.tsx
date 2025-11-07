@@ -1,9 +1,9 @@
-import { DollarSign, Star, Clock, ArrowUp } from "lucide-react";
+import { DollarSign, Star, Clock, ArrowUp, ArrowDown } from "lucide-react";
 
 interface SummaryData {
   value: string;
-  change: number;
-  isPositive: boolean;
+  change: number;       // % value (e.g., -83.2014)
+  isPositive: boolean;  // optional consistency flag
 }
 
 interface SummaryCardsProps {
@@ -40,79 +40,87 @@ export function SummaryCards({
     },
   ];
 
+  const formatGrowth = (g: number) =>
+    Number.isFinite(g) ? g.toFixed(2) : "0.00";
+
   return (
     <div className="grid grid-cols-3 sm:grid-cols-3 gap-4 w-full">
-      {cards.map((card, i) => (
-        <div
-          key={i}
-          className="min-w-[110px] flex flex-col justify-between rounded-[12px] border border-[#e5e7eb] shadow-sm hover:shadow-md transition-shadow duration-150 bg-white p-3 sm:p-5 overflow-hidden box-border"
-        >
-          <div className="flex flex-col items-start min-w-0 min-h-0 flex-1">
-            {/* Icon */}
-            <div className="bg-[#c7d2fe] flex items-center justify-center rounded-full w-10 h-10 sm:w-12 sm:h-12 mb-2 flex-shrink-0">
-              {card.icon}
-            </div>
+      {cards.map((card, i) => {
+        const positive = card.data.isPositive ?? card.data.change >= 0;
+        const ArrowIcon = positive ? ArrowUp : ArrowDown;
 
-            {/* Title */}
-            <p
-              className="text-[#444] mb-1 mt-1 max-w-full"
-              style={{
-                fontSize: "clamp(10px, 2.1vw, 12px)", // ↓ reduced slightly
-                lineHeight: 1.25,
-                wordBreak: "keep-all",
-                overflowWrap: "normal",
-                hyphens: "none",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {card.title}
-            </p>
+        return (
+          <div
+            key={i}
+            className="min-w-[110px] flex flex-col justify-between rounded-[12px] border border-[#e5e7eb] shadow-sm hover:shadow-md transition-shadow duration-150 bg-white p-3 sm:p-5 overflow-hidden box-border"
+          >
+            <div className="flex flex-col items-start min-w-0 min-h-0 flex-1">
+              {/* Icon */}
+              <div className="bg-[#c7d2fe] flex items-center justify-center rounded-full w-10 h-10 sm:w-12 sm:h-12 mb-2 flex-shrink-0">
+                {card.icon}
+              </div>
 
-            {/* Value */}
-            <p
-              className="font-['Poppins-SemiBold'] text-[#444] my-1 max-w-full"
-              style={{
-                fontSize: "clamp(12px, 2.9vw, 19px)", // ↓ slightly reduced
-                lineHeight: 1.18,
-                whiteSpace: "normal",
-                wordBreak: "keep-all",
-                overflowWrap: "normal",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-              title={card.data.value}
-            >
-              {card.data.value}
-            </p>
-
-            {/* Change */}
-            <div className="flex items-center gap-1 mt-1">
-              <ArrowUp
-                className={`w-3.5 h-3.5 ${
-                  card.data.isPositive ? "text-[#10b981]" : "text-[#ef4444]"
-                } flex-shrink-0`}
-              />
+              {/* Title */}
               <p
-                className={`font-['Poppins-SemiBold'] ${
-                  card.data.isPositive ? "text-[#10b981]" : "text-[#ef4444]"
-                } max-w-full`}
+                className="text-[#444] mb-1 mt-1 max-w-full"
                 style={{
-                  fontSize: "clamp(10px, 0.9vw, 12px)", // ↓ reduced
+                  fontSize: "clamp(10px, 2.1vw, 12px)",
+                  lineHeight: 1.25,
                   wordBreak: "keep-all",
                   overflowWrap: "normal",
+                  hyphens: "none",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
               >
-                {card.data.change}%
+                {card.title}
               </p>
+
+              {/* Value */}
+              <p
+                className="font-['Poppins-SemiBold'] text-[#444] my-1 max-w-full"
+                style={{
+                  fontSize: "clamp(12px, 2.9vw, 19px)",
+                  lineHeight: 1.18,
+                  whiteSpace: "normal",
+                  wordBreak: "keep-all",
+                  overflowWrap: "normal",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+                title={card.data.value}
+              >
+                {card.data.value}
+              </p>
+
+              {/* Change */}
+              <div className="flex items-center gap-1 mt-1">
+                <ArrowIcon
+                  className={`w-3.5 h-3.5 ${
+                    positive ? "text-[#10b981]" : "text-[#ef4444]"
+                  } flex-shrink-0`}
+                />
+                <p
+                  className={`font-['Poppins-SemiBold'] ${
+                    positive ? "text-[#10b981]" : "text-[#ef4444]"
+                  } max-w-full`}
+                  style={{
+                    fontSize: "clamp(10px, 0.9vw, 12px)",
+                    wordBreak: "keep-all",
+                    overflowWrap: "normal",
+                  }}
+                >
+                  {formatGrowth(card.data.change)}%
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
