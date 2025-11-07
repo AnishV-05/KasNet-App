@@ -1,5 +1,5 @@
 // src/modules/screens/dashboard/component/ChartSection.tsx
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -19,6 +19,8 @@ interface ChartData {
 interface ChartSectionProps {
   timePeriod: "Diario" | "Semanal" | "Mensual";
   chartData: ChartData[];
+  /** Optional: pass RTK Query's isFetching to avoid any flash */
+  isFetching?: boolean;
 }
 
 const MONTH_LABELS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -64,9 +66,23 @@ function buildSixTicks(maxVal: number): number[] {
   return ticks;
 }
 
-export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
-  /* ------------ Prevent flicker: Only render chart when real data is present ------------ */
-  const hasData = Array.isArray(chartData) && chartData.some(d => d?.value !== null && d?.value !== undefined);
+export function ChartSection({ timePeriod, chartData, isFetching = false }: ChartSectionProps) {
+  /* ------------ Tab transition guard (prevents showing previous tab's curve) ------------ */
+  const prevPeriodRef = useRef<ChartSectionProps["timePeriod"]>(timePeriod);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // When period changes, mark transitioning; clear when new data arrives (array ref or length change)
+  useEffect(() => {
+    if (prevPeriodRef.current !== timePeriod) {
+      setIsTransitioning(true);
+      prevPeriodRef.current = timePeriod;
+    }
+  }, [timePeriod]);
+
+  useEffect(() => {
+    // Any data change ends the transition
+    setIsTransitioning(false);
+  }, [chartData]);
 
   /* ------------ X axis ------------ */
   const xTicks =
@@ -82,11 +98,19 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
   const maxValue = chartData.reduce((m, d) => Math.max(m, d.value || 0), 0);
   const yTicks = buildSixTicks(maxValue);
 
+  /* ------------ Data + Chart key to force remount on period/domain changes ------------ */
+  const stableData = useMemo(() => (Array.isArray(chartData) ? chartData.slice() : []), [chartData]);
+  const chartKey = useMemo(() => `${timePeriod}-${xDomain.join(":")}`, [timePeriod, xDomain]);
+
+  /* ------------ Helpers ------------ */
+  const hasData = stableData.some(d => d?.value !== null && d?.value !== undefined);
+
   /* ------------ Custom X tick renderers ------------ */
+  // Diario: show odd numbers only (…, 27, 29, 31), draw a dot for even numbers.
   const renderXAxisTick = (props: any) => {
     const { x, y, payload } = props;
     const val = Number(payload.value);
-    const isLabel = val % 2 !== 0; // only odd numbers
+    const isLabel = val % 2 !== 0;
     const dotChar = "◦";
 
     return (
@@ -129,8 +153,10 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
     );
   };
 
-  /* ------------ SKELETON while loading ------------ */
-  if (!hasData) {
+  /* ------------ SKELETON while fetching/transitioning/empty ------------ */
+  const showSkeleton = isFetching || isTransitioning || !hasData;
+
+  if (showSkeleton) {
     return (
       <div className="w-full lg:col-start-1 lg:col-end-2">
         <div className="w-full flex justify-start mb-[12px]">
@@ -138,6 +164,7 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
             <h2 className="font-['Poppins-SemiBold'] text-[#222222] text-[16px] sm:text-[18px] md:text-[20px] mb-[6px]">
               Rendimiento de transacciones
             </h2>
+            <div className="h-4 w-56 rounded bg-[#f2f2f2] animate-pulse" />
           </div>
         </div>
         <div className="w-full h-[240px] sm:h-[260px] md:h-[300px] rounded-md bg-[#f2f2f2] animate-pulse" />
@@ -169,8 +196,8 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
       <div className="w-full h-[240px] sm:h-[260px] md:h-[300px] flex-1">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            key={timePeriod} // prevents stale chart reuse (fixes flicker)
-            data={chartData}
+            key={chartKey}                   // force remount on period/domain change
+            data={stableData}                // fresh array prevents path reuse
             margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
           >
             <defs>
@@ -185,7 +212,7 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
             <XAxis
               dataKey="day"
               type="number"
-              domain={xDomain}
+              domain={timePeriod === "Diario" ? [1, 31] : [1, 12]}
               ticks={xTicks}
               axisLine={false}
               tickLine={false}
@@ -201,7 +228,7 @@ export function ChartSection({ timePeriod, chartData }: ChartSectionProps) {
             />
 
             <YAxis
-              ticks={yTicks}
+              ticks={yTicks} // exactly 6 ticks
               axisLine={false}
               tickLine={false}
               tick={{ fontSize: 10, fill: "#6f7276" }}

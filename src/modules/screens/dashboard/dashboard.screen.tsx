@@ -51,10 +51,10 @@ export function DashboardScreen() {
   const { data: apiSummary, isFetching: loadingSummary } =
     useGetSummaryQuery({ terminal_id: terminalId, start, end });
 
-  const { data: apiSeries } =
+  const { data: apiSeries, isFetching: loadingSeries} =
     useGetTimeseriesQuery({ terminal_id: terminalId, start, end });
 
-  const { data: apiGroup } =
+  const { data: apiGroup, isFetching: loadingGroup } =
     useGetGroupByQuery({ terminal_id: terminalId, dimension: dimMap[transactionType], start, end });
 
   // ---- helpers ----
@@ -246,7 +246,7 @@ export function DashboardScreen() {
                 </div>
 
                 <div className="order-4 lg:order-3 mb-[10px] sm:mb-[0px] w-full overflow-x-auto min-w-0">
-                  <ChartSection timePeriod={timePeriod} chartData={chartData} />
+                  <ChartSection timePeriod={timePeriod} chartData={chartData} isFetching={loadingSeries}/>
                 </div>
               </div>
 
@@ -286,83 +286,92 @@ export function DashboardScreen() {
                 <div className="flex flex-col items-center lg:items-stretch gap-[20px] sm:gap-[24px] w-full">
                   {/* Donut */}
                   <div className="w-full flex items-center justify-center mb-[8px] mt-[20px] sm:mt-[24px]">
-                    <div className="relative w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px]">
-                      <svg viewBox="0 0 208 208" className="w-full h-full">
-                        <g>
-                          {(() => {
-                            const innerRadius = 85;
-                            const outerRadius = 100;
-                            const rad = (a: number) => (a * Math.PI) / 180;
-
-                            const items0 = (transactionData?.items ?? []).filter(
-                              (i: any) => (i?.percentage ?? 0) > 0
-                            );
-
-                            if (!items0.length || (transactionData?.total ?? 0) === 0) {
-                              // neutral ring
-                              return (
-                                <circle
-                                  cx="104"
-                                  cy="104"
-                                  r={(innerRadius + outerRadius) / 2}
-                                  fill="none"
-                                  stroke="#efefef"
-                                  strokeWidth={outerRadius - innerRadius}
-                                />
-                              );
-                            }
-
-                            if (items0.length === 1) {
-                              const c = items0[0];
-                              return (
-                                <circle
-                                  cx="104"
-                                  cy="104"
-                                  r={(innerRadius + outerRadius) / 2}
-                                  fill="none"
-                                  stroke={c.colorHex}
-                                  strokeWidth={outerRadius - innerRadius}
-                                />
-                              );
-                            }
-
-                            let current = -90; // start at top
-                            return items0.map((item: any, idx: number) => {
-                              const end = current + (item.percentage / 100) * 360;
-                              const x1 = 104 + innerRadius * Math.cos(rad(current));
-                              const y1 = 104 + innerRadius * Math.sin(rad(current));
-                              const x2 = 104 + outerRadius * Math.cos(rad(current));
-                              const y2 = 104 + outerRadius * Math.sin(rad(current));
-                              const x3 = 104 + outerRadius * Math.cos(rad(end));
-                              const y3 = 104 + outerRadius * Math.sin(rad(end));
-                              const x4 = 104 + innerRadius * Math.cos(rad(end));
-                              const y4 = 104 + innerRadius * Math.sin(rad(end));
-                              const largeArc = item.percentage > 50 ? 1 : 0;
-
-                              const path = (
-                                <path
-                                  key={`${item.name}-${idx}`}
-                                  d={`M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1} ${y1}`}
-                                  fill={item.colorHex}
-                                />
-                              );
-                              current = end;
-                              return path;
-                            });
-                          })()}
-                        </g>
-                      </svg>
-
-                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center">
-                        <p className="font-['Poppins-Regular'] text-[#444] text-[13px] leading-[18px]">Total:</p>
-                        <p className="font-['Poppins-SemiBold'] text-[#444] text-[15px] leading-[22px]">
-                          {transactionData?.total ?? 0} trxs.
-                        </p>
-                        {(transactionData?.items?.length ?? 0) === 0 && (
-                          <span className="mt-[4px] text-[12px] text-[#6f7276]">Sin datos</span>
-                        )}
+                    {loadingGroup ? (
+                      // ---- SKELETON while loading ----
+                      <div className="relative w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px]">
+                        <div className="w-full h-full rounded-full bg-[#f2f2f2] animate-pulse" />
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                          <div className="h-3 w-16 bg-[#e9e9e9] rounded mb-2 animate-pulse" />
+                          <div className="h-4 w-24 bg-[#e9e9e9] rounded animate-pulse" />
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      // ---- REAL DONUT ----
+                      <div className="relative w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] md:w-[200px] md:h-[200px]">
+                        <svg viewBox="0 0 208 208" className="w-full h-full">
+                          <g>
+                            {(() => {
+                              const innerRadius = 85;
+                              const outerRadius = 100;
+                              const rad = (a: number) => (a * Math.PI) / 180;
+
+                              const items0 = (transactionData?.items ?? []).filter(
+                                (i: any) => (i?.percentage ?? 0) > 0
+                              );
+
+                              if (!items0.length || (transactionData?.total ?? 0) === 0) {
+                                return (
+                                  <circle
+                                    cx="104" cy="104"
+                                    r={(innerRadius + outerRadius) / 2}
+                                    fill="none"
+                                    stroke="#efefef"
+                                    strokeWidth={outerRadius - innerRadius}
+                                  />
+                                );
+                              }
+
+                              if (items0.length === 1) {
+                                const c = items0[0];
+                                return (
+                                  <circle
+                                    cx="104" cy="104"
+                                    r={(innerRadius + outerRadius) / 2}
+                                    fill="none"
+                                    stroke={c.colorHex}
+                                    strokeWidth={outerRadius - innerRadius}
+                                  />
+                                );
+                              }
+
+                              let current = -90; // start at top
+                              return items0.map((item: any, idx: number) => {
+                                const end = current + (item.percentage / 100) * 360;
+                                const x1 = 104 + innerRadius * Math.cos(rad(current));
+                                const y1 = 104 + innerRadius * Math.sin(rad(current));
+                                const x2 = 104 + outerRadius * Math.cos(rad(current));
+                                const y2 = 104 + outerRadius * Math.sin(rad(current));
+                                const x3 = 104 + outerRadius * Math.cos(rad(end));
+                                const y3 = 104 + outerRadius * Math.sin(rad(end));
+                                const x4 = 104 + innerRadius * Math.cos(rad(end));
+                                const y4 = 104 + innerRadius * Math.sin(rad(end));
+                                const largeArc = item.percentage > 50 ? 1 : 0;
+
+                                const path = (
+                                  <path
+                                    key={`${item.name}-${idx}`}
+                                    d={`M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1} ${y1}`}
+                                    fill={item.colorHex}
+                                  />
+                                );
+                                current = end;
+                                return path;
+                              });
+                            })()}
+                          </g>
+                        </svg>
+
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center">
+                          <p className="font-['Poppins-Regular'] text-[#444] text-[13px] leading-[18px]">Total:</p>
+                          <p className="font-['Poppins-SemiBold'] text-[#444] text-[15px] leading-[22px]">
+                            {transactionData?.total ?? 0} trxs.
+                          </p>
+                          {(transactionData?.items?.length ?? 0) === 0 && (
+                            <span className="mt-[4px] text-[12px] text-[#6f7276]">Sin datos</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* List */}
