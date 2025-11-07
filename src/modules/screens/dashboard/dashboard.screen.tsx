@@ -376,41 +376,65 @@ export function DashboardScreen() {
 
                   {/* List */}
                   <div className="w-full flex-1">
-                    <div className="box-border flex flex-col gap-[6px]">
-                      {transactionData.items.length === 0 && (
-                        <div className="px-[10px] py-[12px] text-[#6f7276] text-[13px]">Sin datos.</div>
-                      )}
-                      {transactionData.items.map((item: any, idx: number) => (
-                        <div
-                          key={`${item.name}-${idx}`}
-                          className={`flex items-center justify-between px-[10px] sm:px-[12px] py-[8px] sm:py-[10px] rounded-[10px] ${
-                            idx !== transactionData.items.length - 1 ? "border-b border-[#efefef]" : ""
-                          }`}
-                        >
-                          <div className="flex items-center gap-[10px] sm:gap-[12px]">
-                            <div
-                              className="flex items-center justify-center min-w-[50px] sm:min-w-[56px] px-[10px] py-[6px] rounded-[20px]"
-                              style={{ backgroundColor: item.colorHex }}
-                            >
-                              <p
-                                className="font-['Poppins-Medium'] text-[13px] sm:text-[14px]"
-                                style={{ color: item.textHex }}
+                    {loadingGroup ? (
+                      // ---------- Skeleton List While Loading ----------
+                      <div className="flex flex-col gap-[6px] px-[10px]">
+                        {[1, 2, 3, 4].map((_, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center justify-between py-[10px] border-b border-[#efefef] animate-pulse"
+                          >
+                            <div className="flex items-center gap-[10px]">
+                              <div className="w-[56px] h-[28px] rounded-[20px] bg-[#e9e9e9]" />
+                            </div>
+                            <div className="text-right">
+                              <div className="h-[14px] w-[60px] bg-[#e9e9e9] rounded mb-[4px]" />
+                              <div className="h-[12px] w-[50px] bg-[#e9e9e9] rounded" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      // ---------- Actual Data ----------
+                      <div className="box-border flex flex-col gap-[6px]">
+                        {transactionData.items.length === 0 && (
+                          <div className="px-[10px] py-[12px] text-[#6f7276] text-[13px]">
+                            Sin datos.
+                          </div>
+                        )}
+
+                        {transactionData.items.map((item: any, idx: number) => (
+                          <div
+                            key={`${item.name}-${idx}`}
+                            className={`flex items-center justify-between px-[10px] sm:px-[12px] py-[8px] sm:py-[10px] rounded-[10px] ${
+                              idx !== transactionData.items.length - 1 ? "border-b border-[#efefef]" : ""
+                            }`}
+                          >
+                            <div className="flex items-center gap-[10px] sm:gap-[12px]">
+                              <div
+                                className="flex items-center justify-center min-w-[50px] sm:min-w-[56px] px-[10px] py-[6px] rounded-[20px]"
+                                style={{ backgroundColor: item.colorHex }}
                               >
-                                {item.name}
+                                <p
+                                  className="font-['Poppins-Medium'] text-[13px] sm:text-[14px]"
+                                  style={{ color: item.textHex }}
+                                >
+                                  {item.name}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-['Poppins-SemiBold'] text-[#444] text-[13px] sm:text-[14px]">
+                                {item.transactions} trxs.
+                              </p>
+                              <p className="text-[#444] font-['Poppins-Regular'] text-[12px]">
+                                S/. {Number(item.amount ?? 0).toFixed(2)}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-['Poppins-SemiBold'] text-[#444] text-[13px] sm:text-[14px]">
-                              {item.transactions} trxs.
-                            </p>
-                            <p className="text-[#444] font-['Poppins-Regular'] text-[12px]">
-                              S/. {Number(item.amount ?? 0).toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                 </div>

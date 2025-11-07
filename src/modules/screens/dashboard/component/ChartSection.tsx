@@ -198,7 +198,7 @@ export function ChartSection({ timePeriod, chartData, isFetching = false }: Char
           <AreaChart
             key={chartKey}                   // force remount on period/domain change
             data={stableData}                // fresh array prevents path reuse
-            margin={{ top: 10, right: 12, left: -10, bottom: 0 }}
+            margin={{ top: 10, right: 10, left: -30, bottom: 0 }}
           >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -233,7 +233,7 @@ export function ChartSection({ timePeriod, chartData, isFetching = false }: Char
               tickLine={false}
               tick={{ fontSize: 10, fill: "#6f7276" }}
               tickFormatter={(v: number) => {
-                if (v === 0) return "0k";
+                if (v === 0) return "0";
                 if (v >= 1000) return `${Math.round(v / 1000)}k`;
                 return String(v);
               }}
