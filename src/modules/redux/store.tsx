@@ -6,7 +6,7 @@ import { emptyApi as externalBffApi } from './api/externalBffApi.empty-api'
 import { ReducerPathEnum } from './constants/reducer-path.constants'
 
 const reducers = combineReducers({
-  // ✅ register RTK Query reducer using its actual reducerPath
+  // Register RTK Query reducer under whatever reducerPath the API uses
   [externalBffApi.reducerPath]: externalBffApi.reducer,
   [ReducerPathEnum.demoSlice]: demoSliceReducer,
 })
