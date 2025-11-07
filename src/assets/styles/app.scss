@@ -12,7 +12,7 @@
   width: 100%;
 }
 .home-cta {
-  background: linear-gradient(90deg, #4f46e5, #06b6d4);
+  background: linear-gradient(90deg,#4f46e5,#06b6d4);
   color: #fff;
   border: none;
   padding: 0.85rem 1.75rem;
@@ -38,5 +38,23 @@ html, body {
   background: transparent;
 }
 
+/* fixed bottom nav sizing + hide on desktop (>=1280px) */
+.fixed-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  height: 64px; /* nav height — adjust if your BottomNav is taller */
+  background: transparent; /* keep if BottomNav paints its own bg */
+}
+
+/* ensure content area can shrink inside flex containers */
+.main-scroll-minh-0 { min-height: 0; }
+
+/* hide the fixed nav on desktop (>=1280px) */
+@media (min-width: 1280px) {
+  .fixed-bottom-nav { display: none !important; }
+}
 
  

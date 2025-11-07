@@ -21,9 +21,6 @@ export function DesktopHeader() {
           </p>
           <div className="flex gap-[4px] items-center">
             <p className="text-[12px] text-white leading-[18px]">Terminal ID: 00032703</p>
-            <div className="bg-white border border-[#4b4bbb] flex items-center justify-center rounded-full size-[24px]">
-              <Home className="size-[14px] text-[#4B4BBB]" />
-            </div>
           </div>
         </div>
         <ChevronDown className="size-[24px] text-[#F9CB00]" />
