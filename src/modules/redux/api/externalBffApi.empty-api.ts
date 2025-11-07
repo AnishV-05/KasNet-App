@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { API_EXTERNAL_URL } from '@/config/envs'
+import { NEXT_PUBLIC_API_EXTERNAL_URL } from '@/config/envs'
 import { ReducerPathEnum } from '../constants/reducer-path.constants'
 import { TagsEnum } from '../constants/tags-types.constants'
 
@@ -18,7 +18,7 @@ export type GroupByArgs = SummaryArgs & { dimension: 'entity' | 'channel' | 'ope
 export const emptyApi = createApi({
   reducerPath: ReducerPathEnum.authBffApi,
   baseQuery: fetchBaseQuery({
-    baseUrl: API_EXTERNAL_URL,
+    baseUrl: NEXT_PUBLIC_API_EXTERNAL_URL,
     // IMPORTANT: strip ALL custom headers so preflight is not triggered
     prepareHeaders: (headers) => {
       // ensure no leftovers
