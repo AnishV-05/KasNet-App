@@ -25,7 +25,6 @@ module.exports = (_, argv) => {
   const config = {
     entry: './src/main',
     mode: argv.mode,
-    // <<< important: choose safe source-map for production (no eval())
     devtool: isProd ? 'source-map' : 'eval-cheap-module-source-map',
 
     devServer: {
@@ -38,13 +37,12 @@ module.exports = (_, argv) => {
       filename: '[name].[contenthash].js',
       chunkFilename: '[id].[chunkhash].js',
       path: path.resolve(__dirname, 'dist'),
-      publicPath: 'auto',
+      // Ensure trailing slash no matter what PUBLIC_URL is
+      publicPath: ((process.env.PUBLIC_URL || '/kasnet/') + '/').replace(/\/+$/, '/') ,
     },
     resolve: {
       extensions: ['.tsx', '.ts', '.jsx', '.js'],
-      alias: {
-        '@': path.resolve(__dirname, 'src'),
-      },
+      alias: { '@': path.resolve(__dirname, 'src') },
       fallback: {
         http: require.resolve('stream-http'),
         stream: require.resolve('stream-browserify'),
@@ -65,6 +63,7 @@ module.exports = (_, argv) => {
         {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
           type: 'asset/resource',
+          generator: { filename: 'assets/fonts/[name][contenthash][ext]' }, // keep .ttf
         },
         {
           test: /\.svg$/,
@@ -73,27 +72,17 @@ module.exports = (_, argv) => {
       ],
     },
     optimization: {
-      // enable minification in production
       minimize: isProd,
       minimizer: [
-        new EsbuildPlugin({
-          target: 'es2015',
-          css: true,
-          // minify only for production
-          minify: isProd,
-        }),
+        new EsbuildPlugin({ target: 'es2015', css: true, minify: isProd }),
       ],
     },
     plugins: [
-      new HtmlWebpackPlugin({
-        template: './public/index.html',
-      }),
+      new HtmlWebpackPlugin({ template: './public/index.html' }),
       new ModuleFederationPlugin({
         name: 'home',
         filename: 'remoteEntry.js',
-        exposes: {
-          './index': './src/router',
-        },
+        exposes: { './index': './src/router' },
         shared: {
           react: { singleton: true, eager: true, requiredVersion: dependencies['react'] },
           'react-dom': { singleton: true, eager: true, requiredVersion: dependencies['react-dom'] },
@@ -108,9 +97,7 @@ module.exports = (_, argv) => {
             from: '**/*',
             to: './',
             context: 'public/',
-            globOptions: {
-              ignore: ['**/index.html', '**/favico.ico', '**/mockServiceWorker.js'],
-            },
+            globOptions: { ignore: ['**/index.html', '**/favico.ico', '**/mockServiceWorker.js'] },
           },
         ],
       }),
@@ -118,25 +105,20 @@ module.exports = (_, argv) => {
     ],
   }
 
-  // CSS / SCSS rule — ensure postcss-loader runs (Tailwind via postcss.config.js)
   const rules = [
     {
       test: /\.(scss|css)$/,
       use: [
         'style-loader',
-        'css-loader',
+        {
+          loader: 'css-loader',
+          options: { url: true }, // allow url() so ttf is emitted
+        },
         {
           loader: 'postcss-loader',
-          options: {
-            postcssOptions: {
-              config: path.resolve(__dirname, 'postcss.config.js'),
-            },
-          },
+          options: { postcssOptions: { config: path.resolve(__dirname, 'postcss.config.js') } },
         },
-        {
-          loader: 'sass-loader',
-          options: {},
-        },
+        { loader: 'sass-loader', options: {} },
       ],
     },
   ]

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
  
 const benefitsFirst = [
   {
-    imageSrc: '/images/hands-placeholder.png',
+    imageSrc: `${process.env.PUBLIC_URL || ''}/images/hands-placeholder.png`,
     title: 'Hola Mundo',
     description: 'Lorem ipsum dolor sit amet consectetur adipiscing elit. Velit viverra eros nascetur etiam enim venenatis nostra tristique.',
   },

@@ -14,7 +14,7 @@ AnalyticsManager.init()
 i18next.use(initReactI18next).init(configurationI18n)
  
 const DashboardRouter = () => (
-  <BrowserRouter basename="/">
+  <BrowserRouter basename={process.env.PUBLIC_URL || '/kasnet'}>
     <AppProvider>
       <Provider store={store}>
         <Routes>

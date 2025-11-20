@@ -5,9 +5,7 @@ export function DesktopHeader() {
     <div className="bg-[#4b4bbb] flex gap-[16px] h-[80px] items-center px-[32px] py-[16px] w-full">
       {/* Logo */}
       <div className="flex items-center gap-[8px] grow">
-        <img src="/images/kasnet-logo.png" alt="Kasnet Logo" />
-
-
+        <img src={`${process.env.PUBLIC_URL || ''}/images/kasnet-logo.png`} alt="Kasnet Logo"/>
       </div>
 
       {/* User Info */}
