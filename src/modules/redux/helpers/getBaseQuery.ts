@@ -10,8 +10,7 @@ import {
 
 /** Environment-based external API endpoint */
 const API_EXTERNAL_URL =
-  process.env.NEXT_PUBLIC_API_EXTERNAL_URL?.replace(/\/+$/, '') ||
-  'https://kasnet-hzjr.onrender.com'; // fallback safety
+  process.env.API_EXTERNAL_URL?.replace(/\/+$/, '') 
 
 /** Local session helper */
 const readSession = (): any => {

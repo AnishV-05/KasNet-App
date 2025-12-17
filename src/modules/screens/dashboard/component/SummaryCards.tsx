@@ -27,16 +27,19 @@ export function SummaryCards({
       ),
       title: "Total de transacciones",
       data: totalTransactions,
+      showGrowth: true,
     },
     {
       icon: <Star className="w-5 h-5 text-[#4f46e5]" />,
       title: "Operación favorita",
       data: favoriteOperation,
+      showGrowth: true,
     },
     {
       icon: <Clock className="w-5 h-5 text-[#4f46e5]" />,
       title: "Hora con más transacciones",
       data: peakHour,
+      showGrowth: false,
     },
   ];
 
@@ -98,6 +101,7 @@ export function SummaryCards({
               </p>
 
               {/* Change */}
+              {card.showGrowth && (
               <div className="flex items-center gap-1 mt-1">
                 <ArrowIcon
                   className={`w-3.5 h-3.5 ${
@@ -116,7 +120,7 @@ export function SummaryCards({
                 >
                   {formatGrowth(card.data.change)}%
                 </p>
-              </div>
+              </div>)}
             </div>
           </div>
         );

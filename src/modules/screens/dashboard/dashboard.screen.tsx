@@ -13,19 +13,48 @@ import {
   useGetSummaryQuery,
   useGetTimeseriesQuery,
   useGetGroupByQuery,
+  useGetTerminalsQuery,
 } from "@/modules/redux/api/externalBffApi.empty-api";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 type TimePeriod = "Diario" | "Semanal" | "Mensual";
 type TransactionType = "Canal" | "Operación" | "Entidad";
 
-export function DashboardScreen() {
+type DashboardScreenProps = {
+  terminalId?: string; // from Kasnet parent if available
+ // agentName?: string;
+ // timeZone?: string;
+};
+
+export function DashboardScreen({ terminalId }: DashboardScreenProps) {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("Diario");
   const [transactionType, setTransactionType] = useState<TransactionType>("Canal");
   const [activeMenu, setActiveMenu] = useState("rendimiento");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // ---- terminals fallback (Option C) ----
+  const { data: terminals } = useGetTerminalsQuery();
+
+  // terminals API returns a flat array of IDs (numbers), so grab the first one
+  const fallbackTerminalId = useMemo(() => {
+    if (!terminals?.length) return undefined;
+    return String(terminals[10]);
+  }, [terminals]);
+
+ // const testTerminalId = "37184201"; 
+
+  // final terminal used for all analytics calls:
+  // 1) prefer parent terminalId
+  // 2) otherwise use first from /analytics/terminals
+  const effectiveTerminalId = terminalId || fallbackTerminalId;
+  const hasTerminal = !!effectiveTerminalId;
+
   // ---- date ranges by tab ----
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  const fmtStart = (d: Date) =>
+  `${d.toISOString().split("T")[0]} 00:00:00`;
+  const fmtEnd = (d: Date) => 
+  `${d.toISOString().split("T")[0]} 00:00:00`;
+
   const today = new Date();
   const daysAgo = (n: number) => {
     const d = new Date(today);
@@ -40,12 +69,11 @@ export function DashboardScreen() {
   };
 
   const ranges: Record<TimePeriod, { start: string; end: string }> = {
-    Diario: { start: fmt(daysAgo(29)), end: fmt(today) }, // ~30 días
-    Semanal: { start: fmt(daysAgo(83)), end: fmt(today) }, // ~12 semanas
-    Mensual: { start: fmt(monthsAgoStart(11)), end: fmt(today) }, // 12 meses
+    Diario: { start: fmtStart(daysAgo(31)), end: fmtEnd(today) }, // ~31 días
+    Semanal: { start: fmtStart(daysAgo(83)), end: fmtEnd(today) }, // ~12 semanas
+    Mensual: { start: fmtStart(monthsAgoStart(11)), end: fmtEnd(today) }, // 12 meses
   };
 
-  const terminalId = "21811201";
   const { start, end } = ranges[timePeriod];
 
   const dimMap: Record<TransactionType, "channel" | "operation" | "entity"> = {
@@ -55,14 +83,19 @@ export function DashboardScreen() {
   };
 
   // ---- API calls ----
-  const { data: apiSummary, isFetching: loadingSummary } =
-    useGetSummaryQuery({ terminal_id: terminalId, start, end });
+  const { data: apiSummary, isFetching: loadingSummary } = useGetSummaryQuery(
+    hasTerminal ? { terminal_id: effectiveTerminalId!, start, end } : skipToken
+  );
 
-  const { data: apiSeries, isFetching: loadingSeries } =
-    useGetTimeseriesQuery({ terminal_id: terminalId, start, end });
+  const { data: apiSeries, isFetching: loadingSeries } = useGetTimeseriesQuery(
+    hasTerminal ? { terminal_id: effectiveTerminalId!, start, end } : skipToken
+  );
 
-  const { data: apiGroup, isFetching: loadingGroup } =
-    useGetGroupByQuery({ terminal_id: terminalId, dimension: dimMap[transactionType], start, end });
+  const { data: apiGroup, isFetching: loadingGroup } = useGetGroupByQuery(
+    hasTerminal
+      ? { terminal_id: effectiveTerminalId!, dimension: dimMap[transactionType], start, end }
+      : skipToken
+  );
 
   // ---- helpers ----
   const toAmPm = (h: number) => {
@@ -75,8 +108,16 @@ export function DashboardScreen() {
   // color utils
   const BRAND_COLORS = ["#4B4BBB", "#F9CB00", "#AAB5FF"]; // keep originals for top 3
   const EXTRA_COLORS = [
-    "#2BBBD8", "#FF6B6B", "#2ECC71", "#FF9F43",
-    "#F368E0", "#5C7CFA", "#A3E635", "#22D3EE", "#64748B", "#8B5CF6",
+    "#2BBBD8",
+    "#FF6B6B",
+    "#2ECC71",
+    "#FF9F43",
+    "#F368E0",
+    "#5C7CFA",
+    "#A3E635",
+    "#22D3EE",
+    "#64748B",
+    "#8B5CF6",
   ];
   const wheelColor = (i: number) => `hsl(${(i * 47) % 360} 70% 52%)`;
   const luminance = (hex: string) => {
@@ -128,9 +169,9 @@ export function DashboardScreen() {
   const summary = useMemo(() => {
     if (!apiSummary) {
       return {
-        totalTransactions: { value: loadingSummary ? "…" : "0", change: 0, isPositive: true },
-        favoriteOperation: { value: loadingSummary ? "…" : "-", change: 0, isPositive: true },
-        peakHour: { value: loadingSummary ? "…" : "-", change: 0, isPositive: true },
+        totalTransactions: { value: loadingSummary ? "…" : "…", change: 0, isPositive: true },
+        favoriteOperation: { value: loadingSummary ? "…" : "…", change: 0, isPositive: true },
+        peakHour: { value: loadingSummary ? "…" : "…", change: 0, isPositive: true },
       };
     }
     return {
@@ -141,13 +182,16 @@ export function DashboardScreen() {
       },
       favoriteOperation: {
         value: apiSummary.favorite_operation ?? "-",
-        change: 0,
-        isPositive: true,
-      },
-      peakHour: {
-        value: typeof apiSummary.peak_hour?.value === "number" ? toAmPm(apiSummary.peak_hour.value) : "-",
         change: apiSummary.peak_hour?.growth ?? 0,
         isPositive: (apiSummary.peak_hour?.growth ?? 0) >= 0,
+      },
+      peakHour: {
+        value:
+          typeof apiSummary.peak_hour?.value === "number"
+            ? toAmPm(apiSummary.peak_hour.value)
+            : "-",
+        change: 0,
+        isPositive: true,
       },
     };
   }, [apiSummary, loadingSummary]);
@@ -155,22 +199,31 @@ export function DashboardScreen() {
   // ---- CHART (backend; empty array while loading) ----
   const chartData = useMemo(() => {
     if (!apiSeries?.length) return [];
-    return aggregateSeries(
-      apiSeries.map((s) => ({ date: s.date, transactions: s.transactions ?? 0 })),
-      timePeriod,
-      start
-    );
+
+    const normalized = apiSeries.map((s) => ({
+      date: s.date,
+      transactions: Number(s.transactions ?? 0), // ✅ force number
+    }));
+
+    return aggregateSeries(normalized, timePeriod, start);
   }, [apiSeries, timePeriod, start]);
 
   // ---- DONUT/LIST (brand colors for top 3, auto-generate beyond) ----
   const transactionData = useMemo(() => {
     if (!apiGroup?.length) return { total: 0, items: [] as any[] };
 
-    const total = apiGroup.reduce((a, r) => a + (r.transactions ?? 0), 0);
+    // force numeric values (API returns strings)
+    const total = apiGroup.reduce(
+      (a, r) => a + Number(r.transactions ?? 0),
+      0
+    );
 
     const items = [...apiGroup]
-      .sort((a, b) => (b.transactions ?? 0) - (a.transactions ?? 0))
+      .sort((a, b) => Number(b.transactions ?? 0) - Number(a.transactions ?? 0))
       .map((row, idx) => {
+        const tx = Number(row.transactions ?? 0);
+        const amount = Number(row.total_amount ?? 0);
+
         let colorHex: string;
         if (idx < BRAND_COLORS.length) {
           colorHex = BRAND_COLORS[idx];
@@ -178,13 +231,14 @@ export function DashboardScreen() {
           const extraIndex = idx - BRAND_COLORS.length;
           colorHex = EXTRA_COLORS[extraIndex] ?? wheelColor(extraIndex);
         }
+
         return {
           name: row.channel || row.operation || row.entity || `Item ${idx + 1}`,
           colorHex,
           textHex: bestText(colorHex),
-          transactions: row.transactions ?? 0,
-          amount: row.total_amount ?? 0,
-          percentage: total ? Math.round(((row.transactions ?? 0) / total) * 100) : 0,
+          transactions: tx,
+          amount,
+          percentage: total ? Math.round((tx / total) * 100) : 0,
         };
       });
 
@@ -196,6 +250,7 @@ export function DashboardScreen() {
 
     return { total, items };
   }, [apiGroup]);
+
 
   return (
     <div className="bg-white relative w-full min-h-screen flex flex-col lg:max-w-none mx-auto overflow-x-hidden overflow-y-hidden">
@@ -222,20 +277,20 @@ export function DashboardScreen() {
         <div className="flex h-screen w-full min-w-0">
           {/* Main Content Area */}
           <div
-  className="
-    flex-1 overflow-y-auto min-w-0
-    pb-[calc(64px+env(safe-area-inset-bottom))]
-    sm:pb-[calc(114px+env(safe-area-inset-bottom))]
-  "
->
+            className="
+              flex-1 overflow-y-auto min-w-0
+              pb-[calc(64px+env(safe-area-inset-bottom))]
+              sm:pb-[calc(114px+env(safe-area-inset-bottom))]
+            "
+          >
             <div
-              className={`w-full max-w-[1440px] mx-auto px-[12px] sm:px-[20px] md:px-[24px] lg:px-[40px] py-[16px] sm:py-[20px] lg:py-[32px] pb-[100px] lg:pb-[32px] flex flex-col lg:grid lg:gap-[40px] lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]`}
+              className={`w-full max-w-[1440px] mx-auto px-[12px] sm:px-[20px] md:px-[24px] lg:px-[40px] py-[16px] sm:py-[20px] lg:py-[32px] pb-[100px] lg:pb-[0px] flex flex-col lg:grid lg:gap-[40px] lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)]`}
             >
               {/* Left column */}
               <div className="flex flex-col">
-                <div className="order-1 lg:order-4 mt-[8px] sm:mt-[8px] mb-[32px] sm:mb-[0px] w-full">
+                {/* <div className="order-1 lg:order-4 mt-[8px] sm:mt-[8px] mb-[32px] sm:mb-[0px] w-full">
                   <RecommendationsSection />
-                </div>
+                </div> */}
 
                 <div className="order-2 lg:order-1 flex flex-col gap-[12px] mb-[20px] sm:mb-[32px]">
                   <h1 className="font-['Poppins-SemiBold'] text-[#444444] text-[16px] sm:text-[18px] md:text-[20px] leading-tight">
@@ -262,7 +317,7 @@ export function DashboardScreen() {
               </div>
 
               {/* Vertical Divider */}
-              <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-end-[span_4] self-stretch lg:sticky lg:top-0 lg:-mt-[32px] lg:h-[calc(100vh+32px)] lg:w-[2px] bg-[#efefef] z-10" />
+              <div className="hidden lg:block lg:col-start-2 lg:row-start-1 lg:row-end-[-1] w-[2px] bg-[#efefef] h-[calc(100%+64px)] -my-[32px]" />
 
               {/* Right column */}
               <div className="lg:col-start-3 lg:col-end-4 ">
@@ -275,7 +330,10 @@ export function DashboardScreen() {
                     {(["Canal", "Operación", "Entidad"] as TransactionType[]).map((type) => {
                       const isActive = transactionType === type;
                       return (
-                        <div key={type} className="flex-1 flex flex-col items-center relative min-w-[100px]">
+                        <div
+                          key={type}
+                          className="flex-1 flex flex-col items-center relative min-w-[100px]"
+                        >
                           <button
                             onClick={() => setTransactionType(type)}
                             className={`w-full text-center px-[14px] py-[8px] text-[13px] sm:text-[16px] leading-[18px] transition-all duration-150 rounded-t-[1px]
@@ -381,7 +439,9 @@ export function DashboardScreen() {
                         </svg>
 
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center text-center">
-                          <p className="font-['Poppins-Regular'] text-[#444] text-[13px] leading-[18px]">Total:</p>
+                          <p className="font-['Poppins-Regular'] text-[#444] text-[13px] leading-[18px]">
+                            Total:
+                          </p>
                           <p className="font-['Poppins-SemiBold'] text-[#444] text-[15px] leading-[22px]">
                             {transactionData?.total ?? 0} trxs.
                           </p>
@@ -417,14 +477,18 @@ export function DashboardScreen() {
                       // ---------- Actual Data ----------
                       <div className="box-border flex flex-col gap-[6px]">
                         {transactionData.items.length === 0 && (
-                          <div className="px-[10px] py-[12px] text-[#6f7276] text-[13px]">Sin datos.</div>
+                          <div className="px-[10px] py-[12px] text-[#6f7276] text-[13px]">
+                            Sin datos.
+                          </div>
                         )}
 
                         {transactionData.items.map((item: any, idx: number) => (
                           <div
                             key={`${item.name}-${idx}`}
                             className={`flex items-center justify-between px-[10px] sm:px-[12px] py-[8px] sm:py-[10px] rounded-[10px] ${
-                              idx !== transactionData.items.length - 1 ? "border-b border-[#efefef]" : ""
+                              idx !== transactionData.items.length - 1
+                                ? "border-b border-[#efefef]"
+                                : ""
                             }`}
                           >
                             <div className="flex items-center gap-[10px] sm:gap-[12px]">
@@ -432,7 +496,10 @@ export function DashboardScreen() {
                                 className="flex items-center justify-center min-w-[50px] sm:min-w-[56px] px-[10px] py-[6px] rounded-[20px]"
                                 style={{ backgroundColor: item.colorHex }}
                               >
-                                <p className="font-['Poppins-Medium'] text-[13px] sm:text-[14px]" style={{ color: item.textHex }}>
+                                <p
+                                  className="font-['Poppins-Medium'] text-[13px] sm:text-[14px]"
+                                  style={{ color: item.textHex }}
+                                >
                                   {item.name}
                                 </p>
                               </div>
@@ -441,7 +508,9 @@ export function DashboardScreen() {
                               <p className="font-['Poppins-SemiBold'] text-[#444] text-[13px] sm:text-[14px]">
                                 {item.transactions} trxs.
                               </p>
-                              <p className="text-[#444] font-['Poppins-Regular'] text-[12px]">S/. {Number(item.amount ?? 0).toFixed(2)}</p>
+                              <p className="text-[#444] font-['Poppins-Regular'] text-[12px]">
+                                S/. {Number(item.amount ?? 0).toFixed(2)}
+                              </p>
                             </div>
                           </div>
                         ))}
