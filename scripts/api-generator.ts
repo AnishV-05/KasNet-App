@@ -5,7 +5,7 @@ import path from "path";
 const index = 1;
 const API_LIST = [
   {
-    env: "API_EXTERNAL_URL",
+    env: "VITE_API_EXTERNAL_URL",
     generatedFile: "externalBffApi",
   },
 ];

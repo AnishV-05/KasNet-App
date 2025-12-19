@@ -303,7 +303,7 @@ La ejecución de las pruebas genera reportes de cobertura que pueden ser visuali
 Crea un archivo `.env` en la raíz del proyecto basándote en `.env.example`:
 
 ```bash
-API_EXTERNAL_URL=https://example.com
+VITE_API_EXTERNAL_URL=https://example.com
 KASNET_APPNAME=kn-dashboardtransaction-web
 KASNET_LANDING_APPNAME=reg-kasnetdigital-dashboardtransaction-web
 ANALYTICS_API_KEY=your-amplitude-key

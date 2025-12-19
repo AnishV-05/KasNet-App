@@ -1,11 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { API_EXTERNAL_URL } from '@/config/envs'
+import { VITE_API_EXTERNAL_URL } from '@/config/envs'
 import { ReducerPathEnum } from '../constants/reducer-path.constants'
 import { TagsEnum } from '../constants/tags-types.constants'
 
 /** Final, normalized external API base (no trailing slash) */
 const API_BASE =
-  (API_EXTERNAL_URL || 'https://kasnet-api-dev.azurewebsites.net').replace(/\/+$/, '')
+  (VITE_API_EXTERNAL_URL || 'https://kasnet-api-dev.azurewebsites.net').replace(/\/+$/, '')
 
 export type SummaryResp = {
   total_transactions: { value: number; growth: number | null }

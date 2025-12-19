@@ -41,12 +41,12 @@ export function DashboardScreen({ terminalId }: DashboardScreenProps) {
     return String(terminals[10]);
   }, [terminals]);
 
- // const testTerminalId = "37184201"; 
+  const testTerminalId = "37184201"; 
 
   // final terminal used for all analytics calls:
   // 1) prefer parent terminalId
   // 2) otherwise use first from /analytics/terminals
-  const effectiveTerminalId = terminalId || fallbackTerminalId;
+  const effectiveTerminalId = testTerminalId || terminalId || fallbackTerminalId;
   const hasTerminal = !!effectiveTerminalId;
 
   // ---- date ranges by tab ----

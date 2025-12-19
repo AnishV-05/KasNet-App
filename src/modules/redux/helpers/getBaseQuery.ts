@@ -9,8 +9,8 @@ import {
 } from '@reduxjs/toolkit/query'
 
 /** Environment-based external API endpoint */
-const API_EXTERNAL_URL =
-  process.env.API_EXTERNAL_URL?.replace(/\/+$/, '') 
+const VITE_API_EXTERNAL_URL =
+  process.env.VITE_API_EXTERNAL_URL?.replace(/\/+$/, '') 
 
 /** Local session helper */
 const readSession = (): any => {
@@ -26,7 +26,7 @@ const readSession = (): any => {
  * Base query (uses FULL absolute URL -> fixes Vercel issue)
  */
 const baseQuery = fetchBaseQuery({
-  baseUrl: API_EXTERNAL_URL,
+  baseUrl: VITE_API_EXTERNAL_URL,
   prepareHeaders: (headers) => {
     const session = readSession();
     const idToken: string | undefined =
